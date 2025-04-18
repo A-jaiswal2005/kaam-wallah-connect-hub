@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Header } from "@/components/Header";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 type Worker = {
   id: string;
@@ -50,16 +51,13 @@ export default function Workers() {
           bio,
           location,
           skills,
-          profile_id:id,
-          full_name:profiles(full_name),
-          username:profiles(username),
-          avatar_url:profiles(avatar_url)
+          profiles(full_name, username, avatar_url)
         `)
         .eq('available', true);
         
       if (categoryId) {
         // Convert categoryId string to number if not null
-        query.eq('category_id', categoryId ? parseInt(categoryId) : null);
+        query.eq('category_id', parseInt(categoryId || '0'));
       }
       
       const { data, error } = await query;
@@ -74,10 +72,10 @@ export default function Workers() {
         bio: worker.bio,
         location: worker.location,
         skills: worker.skills,
-        profile_id: worker.profile_id,
-        full_name: worker.full_name?.[0]?.full_name || null,
-        username: worker.username?.[0]?.username || null,
-        avatar_url: worker.avatar_url?.[0]?.avatar_url || null
+        profile_id: worker.id,
+        full_name: worker.profiles?.[0]?.full_name || null,
+        username: worker.profiles?.[0]?.username || null,
+        avatar_url: worker.profiles?.[0]?.avatar_url || null
       })) as Worker[];
     },
   });
@@ -141,19 +139,15 @@ export default function Workers() {
                   <Card key={worker.id}>
                     <CardHeader>
                       <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Avatar>
                           {worker.avatar_url ? (
-                            <img
-                              src={worker.avatar_url}
-                              alt={worker.full_name || "Worker"}
-                              className="w-full h-full rounded-full object-cover"
-                            />
+                            <AvatarImage src={worker.avatar_url} alt={worker.full_name || "Worker"} />
                           ) : (
-                            <span className="text-xl font-bold text-primary">
+                            <AvatarFallback>
                               {worker.full_name ? worker.full_name.charAt(0) : "W"}
-                            </span>
+                            </AvatarFallback>
                           )}
-                        </div>
+                        </Avatar>
                         <div>
                           <CardTitle>{worker.full_name || "Anonymous"}</CardTitle>
                           <CardDescription>{worker.username ? `@${worker.username}` : ""}</CardDescription>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -93,8 +92,7 @@ export default function Jobs() {
         .select(`
           *,
           category:categories(id, name),
-          client_name:profiles!jobs_client_id_fkey(full_name),
-          client_username:profiles!jobs_client_id_fkey(username)
+          profiles!jobs_client_id_fkey(full_name, username)
         `)
         .order('created_at', { ascending: false });
       
@@ -103,8 +101,8 @@ export default function Jobs() {
       // Transform the data to match our Job type
       return (data || []).map(job => ({
         ...job,
-        client_name: job.client_name?.[0]?.full_name || null,
-        client_username: job.client_username?.[0]?.username || null
+        client_name: job.profiles?.[0]?.full_name || null,
+        client_username: job.profiles?.[0]?.username || null
       })) as Job[];
     },
   });
@@ -120,8 +118,7 @@ export default function Jobs() {
         .select(`
           *,
           category:categories(id, name),
-          client_name:profiles!jobs_client_id_fkey(full_name),
-          client_username:profiles!jobs_client_id_fkey(username)
+          profiles!jobs_client_id_fkey(full_name, username)
         `)
         .eq('client_id', userId)
         .order('created_at', { ascending: false });
@@ -131,8 +128,8 @@ export default function Jobs() {
       // Transform the data to match our Job type
       return (data || []).map(job => ({
         ...job,
-        client_name: job.client_name?.[0]?.full_name || null,
-        client_username: job.client_username?.[0]?.username || null
+        client_name: job.profiles?.[0]?.full_name || null,
+        client_username: job.profiles?.[0]?.username || null
       })) as Job[];
     },
     enabled: !!userId,
@@ -149,8 +146,7 @@ export default function Jobs() {
         .select(`
           *,
           category:categories(id, name),
-          client_name:profiles!jobs_client_id_fkey(full_name),
-          client_username:profiles!jobs_client_id_fkey(username)
+          profiles!jobs_client_id_fkey(full_name, username)
         `)
         .eq('worker_id', userId)
         .order('created_at', { ascending: false });
@@ -160,8 +156,8 @@ export default function Jobs() {
       // Transform the data to match our Job type
       return (data || []).map(job => ({
         ...job,
-        client_name: job.client_name?.[0]?.full_name || null,
-        client_username: job.client_username?.[0]?.username || null
+        client_name: job.profiles?.[0]?.full_name || null,
+        client_username: job.profiles?.[0]?.username || null
       })) as Job[];
     },
     enabled: !!userId,
