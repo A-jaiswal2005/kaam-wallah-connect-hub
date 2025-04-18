@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -88,23 +87,42 @@ export default function Jobs() {
   const { data: allJobs, isLoading: isLoadingAllJobs, refetch: refetchAllJobs } = useQuery({
     queryKey: ['all-jobs'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First, fetch the jobs data with categories
+      const { data: jobsData, error: jobsError } = await supabase
         .from('jobs')
         .select(`
           *,
-          category:categories(id, name),
-          client:profiles(full_name, username)
+          category:categories(id, name)
         `)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (jobsError) throw jobsError;
       
-      // Transform the data to match our Job type
-      return (data || []).map(job => ({
-        ...job,
-        client_name: job.client?.full_name || null,
-        client_username: job.client?.username || null
-      })) as Job[];
+      // For each job, fetch the client profile data
+      const jobsWithClientData = await Promise.all((jobsData || []).map(async (job) => {
+        const { data: clientData, error: clientError } = await supabase
+          .from('profiles')
+          .select('full_name, username')
+          .eq('id', job.client_id)
+          .single();
+          
+        if (clientError) {
+          console.error("Error fetching client profile:", clientError);
+          return {
+            ...job,
+            client_name: null,
+            client_username: null
+          };
+        }
+        
+        return {
+          ...job,
+          client_name: clientData?.full_name || null,
+          client_username: clientData?.username || null
+        };
+      }));
+      
+      return jobsWithClientData as Job[];
     },
   });
   
@@ -114,24 +132,43 @@ export default function Jobs() {
     queryFn: async () => {
       if (!userId) return [];
       
-      const { data, error } = await supabase
+      // First, fetch the jobs data with categories
+      const { data: jobsData, error: jobsError } = await supabase
         .from('jobs')
         .select(`
           *,
-          category:categories(id, name),
-          client:profiles(full_name, username)
+          category:categories(id, name)
         `)
         .eq('client_id', userId)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (jobsError) throw jobsError;
       
-      // Transform the data to match our Job type
-      return (data || []).map(job => ({
-        ...job,
-        client_name: job.client?.full_name || null,
-        client_username: job.client?.username || null
-      })) as Job[];
+      // For each job, fetch the client profile data
+      const jobsWithClientData = await Promise.all((jobsData || []).map(async (job) => {
+        const { data: clientData, error: clientError } = await supabase
+          .from('profiles')
+          .select('full_name, username')
+          .eq('id', job.client_id)
+          .single();
+          
+        if (clientError) {
+          console.error("Error fetching client profile:", clientError);
+          return {
+            ...job,
+            client_name: null,
+            client_username: null
+          };
+        }
+        
+        return {
+          ...job,
+          client_name: clientData?.full_name || null,
+          client_username: clientData?.username || null
+        };
+      }));
+      
+      return jobsWithClientData as Job[];
     },
     enabled: !!userId,
   });
@@ -142,24 +179,43 @@ export default function Jobs() {
     queryFn: async () => {
       if (!userId) return [];
       
-      const { data, error } = await supabase
+      // First, fetch the jobs data with categories
+      const { data: jobsData, error: jobsError } = await supabase
         .from('jobs')
         .select(`
           *,
-          category:categories(id, name),
-          client:profiles(full_name, username)
+          category:categories(id, name)
         `)
         .eq('worker_id', userId)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (jobsError) throw jobsError;
       
-      // Transform the data to match our Job type
-      return (data || []).map(job => ({
-        ...job,
-        client_name: job.client?.full_name || null,
-        client_username: job.client?.username || null
-      })) as Job[];
+      // For each job, fetch the client profile data
+      const jobsWithClientData = await Promise.all((jobsData || []).map(async (job) => {
+        const { data: clientData, error: clientError } = await supabase
+          .from('profiles')
+          .select('full_name, username')
+          .eq('id', job.client_id)
+          .single();
+          
+        if (clientError) {
+          console.error("Error fetching client profile:", clientError);
+          return {
+            ...job,
+            client_name: null,
+            client_username: null
+          };
+        }
+        
+        return {
+          ...job,
+          client_name: clientData?.full_name || null,
+          client_username: clientData?.username || null
+        };
+      }));
+      
+      return jobsWithClientData as Job[];
     },
     enabled: !!userId,
   });

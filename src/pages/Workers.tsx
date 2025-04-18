@@ -43,7 +43,8 @@ export default function Workers() {
   const { data: workers, isLoading } = useQuery({
     queryKey: ['workers', categoryId],
     queryFn: async () => {
-      const query = supabase
+      // First, fetch worker data
+      let query = supabase
         .from('workers')
         .select(`
           id,
@@ -51,34 +52,48 @@ export default function Workers() {
           years_experience,
           bio,
           location,
-          skills,
-          profiles(full_name, username, avatar_url)
+          skills
         `)
         .eq('available', true);
         
       if (categoryId) {
-        // Make sure categoryId is parsed as a number
-        query.eq('category_id', categoryId ? parseInt(categoryId) : 0);
+        query = query.eq('category_id', parseInt(categoryId));
       }
       
-      const { data, error } = await query;
+      const { data: workersData, error: workersError } = await query;
       
-      if (error) throw error;
+      if (workersError) throw workersError;
       
-      // Transform the data to match our Worker type
-      return (data || []).map(worker => ({
-        id: worker.id,
-        hourly_rate: worker.hourly_rate,
-        years_experience: worker.years_experience,
-        bio: worker.bio,
-        location: worker.location,
-        skills: worker.skills,
-        profile_id: worker.id,
-        full_name: worker.profiles?.full_name || null,
-        username: worker.profiles?.username || null,
-        avatar_url: worker.profiles?.avatar_url || null
-      })) as Worker[];
-    },
+      // Then, for each worker, fetch their profile data
+      const workersWithProfiles = await Promise.all((workersData || []).map(async (worker) => {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name, username, avatar_url')
+          .eq('id', worker.id)
+          .single();
+          
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          return {
+            ...worker,
+            profile_id: worker.id,
+            full_name: null,
+            username: null,
+            avatar_url: null
+          };
+        }
+        
+        return {
+          ...worker,
+          profile_id: worker.id,
+          full_name: profileData?.full_name || null,
+          username: profileData?.username || null,
+          avatar_url: profileData?.avatar_url || null
+        };
+      }));
+      
+      return workersWithProfiles as Worker[];
+    }
   });
   
   useEffect(() => {
