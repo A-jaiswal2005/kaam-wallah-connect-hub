@@ -9,7 +9,154 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          description: string
+          icon: string
+          id: number
+          name: string
+        }
+        Insert: {
+          description: string
+          icon: string
+          id?: number
+          name: string
+        }
+        Update: {
+          description?: string
+          icon?: string
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      jobs: {
+        Row: {
+          budget: number | null
+          category_id: number
+          client_id: string
+          created_at: string
+          description: string
+          id: string
+          location: string | null
+          status: string | null
+          title: string
+          updated_at: string
+          worker_id: string | null
+        }
+        Insert: {
+          budget?: number | null
+          category_id: number
+          client_id: string
+          created_at?: string
+          description: string
+          id?: string
+          location?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+          worker_id?: string | null
+        }
+        Update: {
+          budget?: number | null
+          category_id?: number
+          client_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          location?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+          worker_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          is_worker: boolean | null
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          is_worker?: boolean | null
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          is_worker?: boolean | null
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      workers: {
+        Row: {
+          available: boolean | null
+          bio: string | null
+          category_id: number
+          created_at: string
+          hourly_rate: number | null
+          id: string
+          location: string | null
+          skills: string[] | null
+          updated_at: string
+          years_experience: number | null
+        }
+        Insert: {
+          available?: boolean | null
+          bio?: string | null
+          category_id: number
+          created_at?: string
+          hourly_rate?: number | null
+          id: string
+          location?: string | null
+          skills?: string[] | null
+          updated_at?: string
+          years_experience?: number | null
+        }
+        Update: {
+          available?: boolean | null
+          bio?: string | null
+          category_id?: number
+          created_at?: string
+          hourly_rate?: number | null
+          id?: string
+          location?: string | null
+          skills?: string[] | null
+          updated_at?: string
+          years_experience?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workers_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
