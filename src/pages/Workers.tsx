@@ -56,8 +56,8 @@ export default function Workers() {
         .eq('available', true);
         
       if (categoryId) {
-        // Convert categoryId string to number if not null
-        query.eq('category_id', parseInt(categoryId || '0'));
+        // Make sure categoryId is parsed as a number
+        query.eq('category_id', categoryId ? parseInt(categoryId) : 0);
       }
       
       const { data, error } = await query;

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -282,7 +283,8 @@ export default function Jobs() {
                     <SelectValue placeholder="Filter by category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All categories</SelectItem>
+                    {/* Changed value="null" to value="_all" to avoid empty string */}
+                    <SelectItem value="_all">All categories</SelectItem>
                     {categories?.map((category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
                         {category.name}
@@ -296,7 +298,8 @@ export default function Jobs() {
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All statuses</SelectItem>
+                    {/* Changed value="" to value="_all" to avoid empty string */}
+                    <SelectItem value="_all">All statuses</SelectItem>
                     <SelectItem value="open">Open</SelectItem>
                     <SelectItem value="assigned">Assigned</SelectItem>
                     <SelectItem value="completed">Completed</SelectItem>
