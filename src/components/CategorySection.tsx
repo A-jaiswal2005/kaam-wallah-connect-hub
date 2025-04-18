@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Hammer, Wrench, Plug, Tools } from "lucide-react";
+import { Hammer, Wrench, Plug, ToolIcon } from "lucide-react";
 
 const categories = [
   {
@@ -28,7 +28,7 @@ const categories = [
   {
     title: "Other Skills",
     description: "Various skilled trade services",
-    icon: Tools,
+    icon: ToolIcon,
   },
 ];
 
