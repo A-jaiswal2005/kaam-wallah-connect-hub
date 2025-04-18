@@ -46,10 +46,8 @@ type Job = {
     id: number;
     name: string;
   };
-  client: {
-    full_name: string;
-    username: string;
-  };
+  client_name: string | null;
+  client_username: string | null;
 };
 
 export default function Jobs() {
@@ -95,12 +93,19 @@ export default function Jobs() {
         .select(`
           *,
           category:categories(id, name),
-          client:profiles!jobs_client_id_fkey(full_name, username)
+          client_name:profiles!jobs_client_id_fkey(full_name),
+          client_username:profiles!jobs_client_id_fkey(username)
         `)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Job[];
+      
+      // Transform the data to match our Job type
+      return (data || []).map(job => ({
+        ...job,
+        client_name: job.client_name?.[0]?.full_name || null,
+        client_username: job.client_username?.[0]?.username || null
+      })) as Job[];
     },
   });
   
@@ -115,13 +120,20 @@ export default function Jobs() {
         .select(`
           *,
           category:categories(id, name),
-          client:profiles!jobs_client_id_fkey(full_name, username)
+          client_name:profiles!jobs_client_id_fkey(full_name),
+          client_username:profiles!jobs_client_id_fkey(username)
         `)
         .eq('client_id', userId)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Job[];
+      
+      // Transform the data to match our Job type
+      return (data || []).map(job => ({
+        ...job,
+        client_name: job.client_name?.[0]?.full_name || null,
+        client_username: job.client_username?.[0]?.username || null
+      })) as Job[];
     },
     enabled: !!userId,
   });
@@ -137,13 +149,20 @@ export default function Jobs() {
         .select(`
           *,
           category:categories(id, name),
-          client:profiles!jobs_client_id_fkey(full_name, username)
+          client_name:profiles!jobs_client_id_fkey(full_name),
+          client_username:profiles!jobs_client_id_fkey(username)
         `)
         .eq('worker_id', userId)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Job[];
+      
+      // Transform the data to match our Job type
+      return (data || []).map(job => ({
+        ...job,
+        client_name: job.client_name?.[0]?.full_name || null,
+        client_username: job.client_username?.[0]?.username || null
+      })) as Job[];
     },
     enabled: !!userId,
   });
@@ -432,7 +451,7 @@ function JobCard({ job, userId }: { job: Job; userId: string | null }) {
           <div>
             <CardTitle>{job.title}</CardTitle>
             <CardDescription>
-              Posted by: {job.client?.full_name || "Anonymous"}
+              Posted by: {job.client_name || "Anonymous"}
             </CardDescription>
           </div>
           <span className={`text-xs px-2 py-1 rounded-full ${getStatusBadgeClass(job.status)}`}>

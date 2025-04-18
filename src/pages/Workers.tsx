@@ -18,16 +18,15 @@ import { Header } from "@/components/Header";
 
 type Worker = {
   id: string;
-  hourly_rate: number;
-  years_experience: number;
-  bio: string;
-  location: string;
-  skills: string[];
-  profile: {
-    full_name: string;
-    username: string;
-    avatar_url: string;
-  };
+  hourly_rate: number | null;
+  years_experience: number | null;
+  bio: string | null;
+  location: string | null;
+  skills: string[] | null;
+  profile_id: string;
+  full_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
 };
 
 export default function Workers() {
@@ -51,18 +50,35 @@ export default function Workers() {
           bio,
           location,
           skills,
-          profile:profiles(full_name, username, avatar_url)
+          profile_id:id,
+          full_name:profiles(full_name),
+          username:profiles(username),
+          avatar_url:profiles(avatar_url)
         `)
         .eq('available', true);
         
       if (categoryId) {
-        query.eq('category_id', categoryId);
+        // Convert categoryId string to number if not null
+        query.eq('category_id', categoryId ? parseInt(categoryId) : null);
       }
       
       const { data, error } = await query;
       
       if (error) throw error;
-      return data as Worker[];
+      
+      // Transform the data to match our Worker type
+      return (data || []).map(worker => ({
+        id: worker.id,
+        hourly_rate: worker.hourly_rate,
+        years_experience: worker.years_experience,
+        bio: worker.bio,
+        location: worker.location,
+        skills: worker.skills,
+        profile_id: worker.profile_id,
+        full_name: worker.full_name?.[0]?.full_name || null,
+        username: worker.username?.[0]?.username || null,
+        avatar_url: worker.avatar_url?.[0]?.avatar_url || null
+      })) as Worker[];
     },
   });
   
@@ -72,9 +88,9 @@ export default function Workers() {
         searchTerm
           ? workers.filter(
               (worker) =>
-                worker.profile.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                worker.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                worker.bio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (worker.full_name && worker.full_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (worker.location && worker.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (worker.bio && worker.bio.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (worker.skills && worker.skills.some(skill => 
                   skill.toLowerCase().includes(searchTerm.toLowerCase())
                 ))
@@ -126,21 +142,21 @@ export default function Workers() {
                     <CardHeader>
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                          {worker.profile.avatar_url ? (
+                          {worker.avatar_url ? (
                             <img
-                              src={worker.profile.avatar_url}
-                              alt={worker.profile.full_name}
+                              src={worker.avatar_url}
+                              alt={worker.full_name || "Worker"}
                               className="w-full h-full rounded-full object-cover"
                             />
                           ) : (
                             <span className="text-xl font-bold text-primary">
-                              {worker.profile.full_name.charAt(0)}
+                              {worker.full_name ? worker.full_name.charAt(0) : "W"}
                             </span>
                           )}
                         </div>
                         <div>
-                          <CardTitle>{worker.profile.full_name}</CardTitle>
-                          <CardDescription>@{worker.profile.username}</CardDescription>
+                          <CardTitle>{worker.full_name || "Anonymous"}</CardTitle>
+                          <CardDescription>{worker.username ? `@${worker.username}` : ""}</CardDescription>
                         </div>
                       </div>
                     </CardHeader>
