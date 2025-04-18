@@ -35,8 +35,9 @@ export default function Workers() {
   const queryParams = new URLSearchParams(location.search);
   const categoryId = queryParams.get("category");
   const categoryName = queryParams.get("name");
+  const searchQuery = queryParams.get("search");
   
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(searchQuery || "");
   const [filteredWorkers, setFilteredWorkers] = useState<Worker[]>([]);
   
   const { data: workers, isLoading } = useQuery({
@@ -51,7 +52,7 @@ export default function Workers() {
           bio,
           location,
           skills,
-          profiles:profiles(full_name, username, avatar_url)
+          profiles(full_name, username, avatar_url)
         `)
         .eq('available', true);
         
@@ -73,10 +74,9 @@ export default function Workers() {
         location: worker.location,
         skills: worker.skills,
         profile_id: worker.id,
-        // Get profile data, ensuring it exists and is not a string
-        full_name: worker.profiles && Array.isArray(worker.profiles) && worker.profiles[0] ? worker.profiles[0].full_name : null,
-        username: worker.profiles && Array.isArray(worker.profiles) && worker.profiles[0] ? worker.profiles[0].username : null,
-        avatar_url: worker.profiles && Array.isArray(worker.profiles) && worker.profiles[0] ? worker.profiles[0].avatar_url : null
+        full_name: worker.profiles?.full_name || null,
+        username: worker.profiles?.username || null,
+        avatar_url: worker.profiles?.avatar_url || null
       })) as Worker[];
     },
   });
@@ -137,7 +137,7 @@ export default function Workers() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredWorkers.map((worker) => (
-                  <Card key={worker.id}>
+                  <Card key={worker.id} className="hover:shadow-md transition-shadow">
                     <CardHeader>
                       <div className="flex items-center space-x-4">
                         <Avatar>

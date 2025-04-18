@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -54,8 +55,8 @@ export default function Jobs() {
   const { toast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string>("_all");
+  const [statusFilter, setStatusFilter] = useState<string>("_all");
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   
   // Fetch user session
@@ -92,7 +93,7 @@ export default function Jobs() {
         .select(`
           *,
           category:categories(id, name),
-          client:profiles!jobs_client_id_fkey(full_name, username)
+          client:profiles(full_name, username)
         `)
         .order('created_at', { ascending: false });
       
@@ -101,8 +102,8 @@ export default function Jobs() {
       // Transform the data to match our Job type
       return (data || []).map(job => ({
         ...job,
-        client_name: job.client && Array.isArray(job.client) && job.client[0] ? job.client[0].full_name : null,
-        client_username: job.client && Array.isArray(job.client) && job.client[0] ? job.client[0].username : null
+        client_name: job.client?.full_name || null,
+        client_username: job.client?.username || null
       })) as Job[];
     },
   });
@@ -118,7 +119,7 @@ export default function Jobs() {
         .select(`
           *,
           category:categories(id, name),
-          client:profiles!jobs_client_id_fkey(full_name, username)
+          client:profiles(full_name, username)
         `)
         .eq('client_id', userId)
         .order('created_at', { ascending: false });
@@ -128,8 +129,8 @@ export default function Jobs() {
       // Transform the data to match our Job type
       return (data || []).map(job => ({
         ...job,
-        client_name: job.client && Array.isArray(job.client) && job.client[0] ? job.client[0].full_name : null,
-        client_username: job.client && Array.isArray(job.client) && job.client[0] ? job.client[0].username : null
+        client_name: job.client?.full_name || null,
+        client_username: job.client?.username || null
       })) as Job[];
     },
     enabled: !!userId,
@@ -146,7 +147,7 @@ export default function Jobs() {
         .select(`
           *,
           category:categories(id, name),
-          client:profiles!jobs_client_id_fkey(full_name, username)
+          client:profiles(full_name, username)
         `)
         .eq('worker_id', userId)
         .order('created_at', { ascending: false });
@@ -156,8 +157,8 @@ export default function Jobs() {
       // Transform the data to match our Job type
       return (data || []).map(job => ({
         ...job,
-        client_name: job.client && Array.isArray(job.client) && job.client[0] ? job.client[0].full_name : null,
-        client_username: job.client && Array.isArray(job.client) && job.client[0] ? job.client[0].username : null
+        client_name: job.client?.full_name || null,
+        client_username: job.client?.username || null
       })) as Job[];
     },
     enabled: !!userId,
@@ -175,8 +176,8 @@ export default function Jobs() {
           job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (job.location && job.location.toLowerCase().includes(searchTerm.toLowerCase()));
           
-        const matchesCategory = !categoryFilter || categoryFilter === "_all" || job.category_id.toString() === categoryFilter;
-        const matchesStatus = !statusFilter || statusFilter === "_all" || job.status === statusFilter;
+        const matchesCategory = categoryFilter === "_all" || job.category_id.toString() === categoryFilter;
+        const matchesStatus = statusFilter === "_all" || job.status === statusFilter;
         
         return matchesSearch && matchesCategory && matchesStatus;
       });
@@ -204,8 +205,8 @@ export default function Jobs() {
   const handleTabChange = (value: string) => {
     // Reset filters when changing tabs
     setSearchTerm("");
-    setCategoryFilter(null);
-    setStatusFilter(null);
+    setCategoryFilter("_all");
+    setStatusFilter("_all");
     
     // Refresh data
     if (value === 'all-jobs') refetchAllJobs();
@@ -277,7 +278,7 @@ export default function Jobs() {
               </div>
               
               <div className="grid grid-cols-2 gap-2">
-                <Select value={categoryFilter || ""} onValueChange={(value) => setCategoryFilter(value === "_all" ? null : value)}>
+                <Select value={categoryFilter} onValueChange={(value) => setCategoryFilter(value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Filter by category" />
                   </SelectTrigger>
@@ -291,7 +292,7 @@ export default function Jobs() {
                   </SelectContent>
                 </Select>
                 
-                <Select value={statusFilter || ""} onValueChange={(value) => setStatusFilter(value === "_all" ? null : value)}>
+                <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
