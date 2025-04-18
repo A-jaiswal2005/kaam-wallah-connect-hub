@@ -51,7 +51,7 @@ export default function Workers() {
           bio,
           location,
           skills,
-          profiles(full_name, username, avatar_url)
+          profiles:profiles(full_name, username, avatar_url)
         `)
         .eq('available', true);
         
@@ -73,9 +73,10 @@ export default function Workers() {
         location: worker.location,
         skills: worker.skills,
         profile_id: worker.id,
-        full_name: worker.profiles?.[0]?.full_name || null,
-        username: worker.profiles?.[0]?.username || null,
-        avatar_url: worker.profiles?.[0]?.avatar_url || null
+        // Get profile data, ensuring it exists and is not a string
+        full_name: worker.profiles && Array.isArray(worker.profiles) && worker.profiles[0] ? worker.profiles[0].full_name : null,
+        username: worker.profiles && Array.isArray(worker.profiles) && worker.profiles[0] ? worker.profiles[0].username : null,
+        avatar_url: worker.profiles && Array.isArray(worker.profiles) && worker.profiles[0] ? worker.profiles[0].avatar_url : null
       })) as Worker[];
     },
   });

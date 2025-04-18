@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -93,7 +92,7 @@ export default function Jobs() {
         .select(`
           *,
           category:categories(id, name),
-          profiles!jobs_client_id_fkey(full_name, username)
+          client:profiles!jobs_client_id_fkey(full_name, username)
         `)
         .order('created_at', { ascending: false });
       
@@ -102,8 +101,8 @@ export default function Jobs() {
       // Transform the data to match our Job type
       return (data || []).map(job => ({
         ...job,
-        client_name: job.profiles?.[0]?.full_name || null,
-        client_username: job.profiles?.[0]?.username || null
+        client_name: job.client && Array.isArray(job.client) && job.client[0] ? job.client[0].full_name : null,
+        client_username: job.client && Array.isArray(job.client) && job.client[0] ? job.client[0].username : null
       })) as Job[];
     },
   });
@@ -119,7 +118,7 @@ export default function Jobs() {
         .select(`
           *,
           category:categories(id, name),
-          profiles!jobs_client_id_fkey(full_name, username)
+          client:profiles!jobs_client_id_fkey(full_name, username)
         `)
         .eq('client_id', userId)
         .order('created_at', { ascending: false });
@@ -129,8 +128,8 @@ export default function Jobs() {
       // Transform the data to match our Job type
       return (data || []).map(job => ({
         ...job,
-        client_name: job.profiles?.[0]?.full_name || null,
-        client_username: job.profiles?.[0]?.username || null
+        client_name: job.client && Array.isArray(job.client) && job.client[0] ? job.client[0].full_name : null,
+        client_username: job.client && Array.isArray(job.client) && job.client[0] ? job.client[0].username : null
       })) as Job[];
     },
     enabled: !!userId,
@@ -147,7 +146,7 @@ export default function Jobs() {
         .select(`
           *,
           category:categories(id, name),
-          profiles!jobs_client_id_fkey(full_name, username)
+          client:profiles!jobs_client_id_fkey(full_name, username)
         `)
         .eq('worker_id', userId)
         .order('created_at', { ascending: false });
@@ -157,8 +156,8 @@ export default function Jobs() {
       // Transform the data to match our Job type
       return (data || []).map(job => ({
         ...job,
-        client_name: job.profiles?.[0]?.full_name || null,
-        client_username: job.profiles?.[0]?.username || null
+        client_name: job.client && Array.isArray(job.client) && job.client[0] ? job.client[0].full_name : null,
+        client_username: job.client && Array.isArray(job.client) && job.client[0] ? job.client[0].username : null
       })) as Job[];
     },
     enabled: !!userId,
@@ -176,8 +175,8 @@ export default function Jobs() {
           job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (job.location && job.location.toLowerCase().includes(searchTerm.toLowerCase()));
           
-        const matchesCategory = !categoryFilter || job.category_id.toString() === categoryFilter;
-        const matchesStatus = !statusFilter || job.status === statusFilter;
+        const matchesCategory = !categoryFilter || categoryFilter === "_all" || job.category_id.toString() === categoryFilter;
+        const matchesStatus = !statusFilter || statusFilter === "_all" || job.status === statusFilter;
         
         return matchesSearch && matchesCategory && matchesStatus;
       });
@@ -218,7 +217,7 @@ export default function Jobs() {
     e.preventDefault();
     // Search is handled by useEffect
   };
-  
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-IN', {
@@ -278,12 +277,11 @@ export default function Jobs() {
               </div>
               
               <div className="grid grid-cols-2 gap-2">
-                <Select value={categoryFilter || ""} onValueChange={(value) => setCategoryFilter(value || null)}>
+                <Select value={categoryFilter || ""} onValueChange={(value) => setCategoryFilter(value === "_all" ? null : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Filter by category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {/* Changed value="null" to value="_all" to avoid empty string */}
                     <SelectItem value="_all">All categories</SelectItem>
                     {categories?.map((category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
@@ -293,12 +291,11 @@ export default function Jobs() {
                   </SelectContent>
                 </Select>
                 
-                <Select value={statusFilter || ""} onValueChange={(value) => setStatusFilter(value || null)}>
+                <Select value={statusFilter || ""} onValueChange={(value) => setStatusFilter(value === "_all" ? null : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
-                    {/* Changed value="" to value="_all" to avoid empty string */}
                     <SelectItem value="_all">All statuses</SelectItem>
                     <SelectItem value="open">Open</SelectItem>
                     <SelectItem value="assigned">Assigned</SelectItem>
