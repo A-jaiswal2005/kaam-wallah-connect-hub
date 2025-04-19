@@ -57,6 +57,7 @@ export default function Jobs() {
   const [categoryFilter, setCategoryFilter] = useState<string>("_all");
   const [statusFilter, setStatusFilter] = useState<string>("_all");
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("all-jobs");
   
   useEffect(() => {
     const checkUser = async () => {
@@ -183,6 +184,12 @@ export default function Jobs() {
   });
   
   useEffect(() => {
+    console.log("Filtering jobs based on active tab:", activeTab);
+    console.log("allJobs:", allJobs);
+    console.log("myJobs:", myJobs);
+    console.log("assignedJobs:", assignedJobs);
+    console.log("userId:", userId);
+    
     const filterJobs = (jobs: Job[] | undefined) => {
       if (!jobs) return [];
       
@@ -200,24 +207,23 @@ export default function Jobs() {
       });
     };
     
-    const tabContent = document.querySelector('[data-state="active"][role="tabpanel"]');
-    const tabId = tabContent?.getAttribute('data-value');
-    
-    switch (tabId) {
-      case 'my-jobs':
-        setFilteredJobs(filterJobs(myJobs));
-        break;
-      case 'assigned-jobs':
-        setFilteredJobs(filterJobs(assignedJobs));
-        break;
-      case 'all-jobs':
-      default:
-        const otherJobs = allJobs?.filter(job => job.client_id !== userId);
+    if (activeTab === 'my-jobs') {
+      setFilteredJobs(filterJobs(myJobs));
+    } else if (activeTab === 'assigned-jobs') {
+      setFilteredJobs(filterJobs(assignedJobs));
+    } else {
+      if (allJobs) {
+        const otherJobs = userId 
+          ? allJobs.filter(job => job.client_id !== userId)
+          : allJobs;
         setFilteredJobs(filterJobs(otherJobs));
+      }
     }
-  }, [allJobs, myJobs, assignedJobs, searchTerm, categoryFilter, statusFilter, userId]);
+  }, [allJobs, myJobs, assignedJobs, searchTerm, categoryFilter, statusFilter, userId, activeTab]);
   
   const handleTabChange = (value: string) => {
+    console.log("Tab changed to:", value);
+    setActiveTab(value);
     setSearchTerm("");
     setCategoryFilter("_all");
     setStatusFilter("_all");
@@ -229,30 +235,6 @@ export default function Jobs() {
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-  
-  const getStatusBadgeClass = (status: string) => {
-    switch (status) {
-      case 'open':
-        return 'bg-emerald-100 text-emerald-800';
-      case 'assigned':
-        return 'bg-blue-100 text-blue-800';
-      case 'completed':
-        return 'bg-purple-100 text-purple-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
   };
 
   return (
