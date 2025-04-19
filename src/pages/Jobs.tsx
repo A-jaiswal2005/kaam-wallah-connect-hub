@@ -58,7 +58,6 @@ export default function Jobs() {
   const [statusFilter, setStatusFilter] = useState<string>("_all");
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   
-  // Fetch user session
   useEffect(() => {
     const checkUser = async () => {
       const { data } = await supabase.auth.getSession();
@@ -70,7 +69,6 @@ export default function Jobs() {
     checkUser();
   }, []);
   
-  // Fetch categories
   const { data: categories } = useQuery({
     queryKey: ['jobs-categories'],
     queryFn: async () => {
@@ -83,11 +81,9 @@ export default function Jobs() {
     },
   });
   
-  // Fetch all jobs
   const { data: allJobs, isLoading: isLoadingAllJobs, refetch: refetchAllJobs } = useQuery({
     queryKey: ['all-jobs'],
     queryFn: async () => {
-      // First, fetch the jobs data with categories
       const { data: jobsData, error: jobsError } = await supabase
         .from('jobs')
         .select(`
@@ -98,23 +94,13 @@ export default function Jobs() {
       
       if (jobsError) throw jobsError;
       
-      // For each job, fetch the client profile data
       const jobsWithClientData = await Promise.all((jobsData || []).map(async (job) => {
-        const { data: clientData, error: clientError } = await supabase
+        const { data: clientData } = await supabase
           .from('profiles')
           .select('full_name, username')
           .eq('id', job.client_id)
           .single();
           
-        if (clientError) {
-          console.error("Error fetching client profile:", clientError);
-          return {
-            ...job,
-            client_name: null,
-            client_username: null
-          };
-        }
-        
         return {
           ...job,
           client_name: clientData?.full_name || null,
@@ -126,13 +112,11 @@ export default function Jobs() {
     },
   });
   
-  // Fetch my jobs (as client)
   const { data: myJobs, isLoading: isLoadingMyJobs, refetch: refetchMyJobs } = useQuery({
     queryKey: ['my-jobs', userId],
     queryFn: async () => {
       if (!userId) return [];
       
-      // First, fetch the jobs data with categories
       const { data: jobsData, error: jobsError } = await supabase
         .from('jobs')
         .select(`
@@ -144,23 +128,13 @@ export default function Jobs() {
       
       if (jobsError) throw jobsError;
       
-      // For each job, fetch the client profile data
       const jobsWithClientData = await Promise.all((jobsData || []).map(async (job) => {
-        const { data: clientData, error: clientError } = await supabase
+        const { data: clientData } = await supabase
           .from('profiles')
           .select('full_name, username')
           .eq('id', job.client_id)
           .single();
           
-        if (clientError) {
-          console.error("Error fetching client profile:", clientError);
-          return {
-            ...job,
-            client_name: null,
-            client_username: null
-          };
-        }
-        
         return {
           ...job,
           client_name: clientData?.full_name || null,
@@ -173,13 +147,11 @@ export default function Jobs() {
     enabled: !!userId,
   });
   
-  // Fetch jobs assigned to me (as worker)
   const { data: assignedJobs, isLoading: isLoadingAssignedJobs, refetch: refetchAssignedJobs } = useQuery({
     queryKey: ['assigned-jobs', userId],
     queryFn: async () => {
       if (!userId) return [];
       
-      // First, fetch the jobs data with categories
       const { data: jobsData, error: jobsError } = await supabase
         .from('jobs')
         .select(`
@@ -191,23 +163,13 @@ export default function Jobs() {
       
       if (jobsError) throw jobsError;
       
-      // For each job, fetch the client profile data
       const jobsWithClientData = await Promise.all((jobsData || []).map(async (job) => {
-        const { data: clientData, error: clientError } = await supabase
+        const { data: clientData } = await supabase
           .from('profiles')
           .select('full_name, username')
           .eq('id', job.client_id)
           .single();
           
-        if (clientError) {
-          console.error("Error fetching client profile:", clientError);
-          return {
-            ...job,
-            client_name: null,
-            client_username: null
-          };
-        }
-        
         return {
           ...job,
           client_name: clientData?.full_name || null,
@@ -220,7 +182,6 @@ export default function Jobs() {
     enabled: !!userId,
   });
   
-  // Filter jobs based on search, category and status
   useEffect(() => {
     const filterJobs = (jobs: Job[] | undefined) => {
       if (!jobs) return [];
@@ -239,32 +200,28 @@ export default function Jobs() {
       });
     };
     
-    // Apply filters to the current active tab data
     const tabContent = document.querySelector('[data-state="active"][role="tabpanel"]');
     const tabId = tabContent?.getAttribute('data-value');
     
     switch (tabId) {
-      case 'all-jobs':
-        setFilteredJobs(filterJobs(allJobs));
-        break;
       case 'my-jobs':
         setFilteredJobs(filterJobs(myJobs));
         break;
       case 'assigned-jobs':
         setFilteredJobs(filterJobs(assignedJobs));
         break;
+      case 'all-jobs':
       default:
-        setFilteredJobs(filterJobs(allJobs));
+        const otherJobs = allJobs?.filter(job => job.client_id !== userId);
+        setFilteredJobs(filterJobs(otherJobs));
     }
-  }, [allJobs, myJobs, assignedJobs, searchTerm, categoryFilter, statusFilter]);
+  }, [allJobs, myJobs, assignedJobs, searchTerm, categoryFilter, statusFilter, userId]);
   
   const handleTabChange = (value: string) => {
-    // Reset filters when changing tabs
     setSearchTerm("");
     setCategoryFilter("_all");
     setStatusFilter("_all");
     
-    // Refresh data
     if (value === 'all-jobs') refetchAllJobs();
     if (value === 'my-jobs') refetchMyJobs();
     if (value === 'assigned-jobs') refetchAssignedJobs();
@@ -272,7 +229,6 @@ export default function Jobs() {
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Search is handled by useEffect
   };
 
   const formatDate = (dateString: string) => {
@@ -473,7 +429,6 @@ function JobCard({ job, userId }: { job: Job; userId: string | null }) {
       return;
     }
     
-    // Check if the user is registered as a worker
     const { data: workerProfile, error: workerError } = await supabase
       .from('workers')
       .select('*')
@@ -490,7 +445,6 @@ function JobCard({ job, userId }: { job: Job; userId: string | null }) {
       return;
     }
     
-    // In a real app, this would show a modal to confirm or contact the job poster
     toast({
       title: "Application sent",
       description: "Your interest has been registered for this job",
